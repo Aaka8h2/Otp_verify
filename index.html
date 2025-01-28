@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram OTP Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(45deg, #6a11cb, #2575fc); background-attachment: fixed; }
+        
+        .container {
+            position: relative;
+            width: 420px;
+            padding: 40px 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .telegram-brand {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .telegram-brand i {
+            font-size: 40px;
+            color: #0088cc;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-bottom: 2px solid #ddd;
+            outline: none;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+
+        .form-group input:focus {
+            border-bottom: 2px solid #0088cc;
+        }
+
+        .otp-inputs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .otp-input {
+            width: 50px;
+            height: 50px;
+            text-align: center;
+            font-size: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .otp-input:focus {
+            border-color: #0088cc;
+            outline: none;
+        }
+
+        .btn-telegram {
+            width: 100%;
+            padding: 15px;
+            background: #0088cc;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-telegram:hover {
+            background: #006699;
+        }
+
+        .send-otp {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #0088cc;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .timer {
+            text-align: center;
+            color: #666;
+            margin: 10px 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error-message {
+            color: #ff4444;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .success-message {
+            color: #00C851;
+            text-align: center;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="telegram-brand">
+            <i class="fab fa-telegram"></i>
+            <h2>Telegram OTP Login</h2>
+        </div>
+        
+        <div id="telegram-id-section">
+            <div class="form-group">
+                <input type="text" id="telegram-id" required>
+                <label>Telegram Username (@username)</label>
+                <button type="button" class="send-otp" onclick="sendOTP()">Send OTP</button>
+            </div>
+            <div class="error-message" id="telegram-error"></div>
+        </div>
+
+        <div id="otp-section" class="hidden">
+            <div class="otp-inputs">
+                <input type="number" class="otp-input" maxlength="1" oninput="moveToNext(this, 1)">
+                <input type="number" class="otp-input" maxlength="1" oninput="moveToNext(this, 2)">
+                <input type="number" class="otp-input" maxlength="1" oninput="moveToNext(this, 3)">
+                <input type="number" class="otp-input" maxlength="1" oninput="moveToNext(this, 4)">
+            </div>
+            <div class="timer" id="timer">Resend OTP in 02:00</div>
+            <button class="btn-telegram" type="button" onclick="verifyOTP()">Verify OTP</button>
+            <div class="error-message" id="otp-error"></div>
+            <div class="success-message" id="otp-success"></div>
+        </div>
+    </div>
+
+    <script>
+        let generatedOTP = '';
+        let timerInterval;
+
+        function generateOTP() {
+            return Math.floor(1000 + Math.random() * 9000).toString();
+        }
+
+        function sendOTP() {
+            const telegramId = document.getElementById('telegram-id').value;
+            const errorElement = document.getElementById('telegram-error');
+            
+            if (!telegramId || !telegramId.startsWith('@')) {
+                errorElement.textContent = 'Please enter a valid Telegram username starting with @';
+                return;
+            }
+
+            // Simulate sending OTP through Telegram bot
+            generatedOTP = generateOTP();
+            localStorage.setItem('tempOTP', generatedOTP);
+            
+            // In real implementation: Call your backend API to send OTP via Telegram bot
+            console.log(`OTP ${generatedOTP} sent to ${telegramId} via Telegram bot`);
+            
+            document.getElementById('telegram-id-section').classList.add('hidden');
+            document.getElementById('otp-section').classList.remove('hidden');
+            startTimer(120);
+        }
+
+        function startTimer(duration) {
+            let timer = duration;
+            const timerElement = document.getElementById('timer');
+            
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timer / 60);
+                const seconds = timer % 60;
+                
+                timerElement.textContent = `Resend OTP in ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (--timer < 0) {
+                    clearInterval(timerInterval);
+                    timerElement.innerHTML = '<a href="#" onclick="resendOTP()">Resend OTP</a>';
+                }
+            }, 1000);
+        }
+
+        function resendOTP() {
+            clearInterval(timerInterval);
+            sendOTP();
+        }
+
+        function moveToNext(input, nextIndex) {
+            if (input.value.length === 1) {
+                const nextInput = document.getElementsByClassName('otp-input')[nextIndex];
+                if (nextInput) nextInput.focus();
+            }
+        }
+
+        function verifyOTP() {
+            const enteredOTP = Array.from(document.getElementsByClassName('otp-input'))
+                                  .map(input => input.value)
+                                  .join('');
+            
+            const storedOTP = localStorage.getItem('tempOTP');
+            const errorElement = document.getElementById('otp-error');
+            const successElement = document.getElementById('otp-success');
+
+            if (enteredOTP === storedOTP) {
+                errorElement.textContent = '';
+                successElement.textContent = 'OTP Verified Successfully! Redirecting...';
+                localStorage.removeItem('tempOTP');
+                // Redirect to dashboard or next page
+                setTimeout(() => window.location.href = '/dashboard', 2000);
+            } else {
+                successElement.textContent = '';
+                errorElement.textContent = 'Invalid OTP. Please try again.';
+            }
+        }
+    </script>
+</body>
+  </html>
